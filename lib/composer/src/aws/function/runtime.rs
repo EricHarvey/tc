@@ -804,6 +804,8 @@ mod tests {
             tasks: HashMap::new(),
             assets: None,
             targets: None,
+            aux_files: None,
+            shared: None,
         }
     }
 

@@ -72,15 +72,6 @@ pub struct Topology {
     pub events: HashMap<String, Event>,
     pub routes: HashMap<String, Route>,
     pub functions: HashMap<String, Function>,
-    /// Full set of this topology's own functions, populated by the
-    /// composer and **never replaced by the resolver**. The resolver
-    /// shrinks `functions` to the modified subset (for code uploads),
-    /// but role/policy reconciliation needs to operate over every
-    /// function so that adding/changing a per-function role JSON
-    /// re-attaches the new role to the lambda even when its code
-    /// hasn't changed.
-    #[serde(default)]
-    pub all_functions: HashMap<String, Function>,
     pub mutations: HashMap<String, Mutation>,
     pub schedules: HashMap<String, Schedule>,
     pub queues: HashMap<String, Queue>,
@@ -774,7 +765,6 @@ fn make(
         events: events,
         routes: routes,
         tests: make_test(spec.tests.clone(), &functions),
-        all_functions: functions.clone(),
         functions: functions,
         schedules: schedule::make_all(&namespace, &infra_dir),
         queues: queues,
@@ -827,7 +817,6 @@ fn make_standalone(dir: &str) -> Topology {
         pools: HashMap::new(),
         roles: make_roles(&functions, &0, &0, &0, &None),
         base_roles: make_base_roles(),
-        all_functions: functions.clone(),
         functions: functions,
         nodes: HashMap::new(),
         mutations: HashMap::new(),
@@ -1227,7 +1216,7 @@ mod tests {
     }
 
     #[test]
-    fn shared_field_defaults_to_false_on_legacy_json() {
+    fn shared_field_is_mandatory_in_function_json() {
         let outer = TempDir::new().unwrap();
         let root = outer.path();
         write_topology_yml(root, "name: serde-test\nkind: step-function\n");
@@ -1240,19 +1229,18 @@ mod tests {
 
         let foo = topology.functions.get("foo").unwrap();
         let mut value = serde_json::to_value(foo).expect("Function serializes to JSON");
-        let removed = value
+        assert!(
+            value.get("shared").is_some(),
+            "freshly serialized Function must include `shared` key"
+        );
+        value
             .as_object_mut()
             .expect("Function JSON is an object")
             .remove("shared");
+        let result: Result<Function, _> = serde_json::from_value(value);
         assert!(
-            removed.is_some(),
-            "freshly serialized Function must include `shared` key"
-        );
-        let legacy: Function = serde_json::from_value(value)
-            .expect("Function JSON missing `shared` must deserialize via #[serde(default)]");
-        assert!(
-            !legacy.shared,
-            "missing `shared` field must default to false on legacy resolver-cache JSON"
+            result.is_err(),
+            "Function JSON missing `shared` must fail to deserialize — non-spec structs have mandatory fields"
         );
     }
 

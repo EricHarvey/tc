@@ -412,6 +412,7 @@ pub struct FunctionSpec {
 
     pub targets: Option<Vec<TargetSpec>>,
     pub aux_files: Option<Vec<String>>,
+    pub shared: Option<bool>,
 }
 
 fn find_revision(dir: &str) -> String {
@@ -532,7 +533,8 @@ fn load_fspec_file(dir: &str) -> Option<FunctionSpec> {
             test: None,
             tasks: HashMap::new(),
             targets: None,
-            aux_files: None
+            aux_files: None,
+            shared: None,
         })
     }
 }
@@ -560,7 +562,8 @@ impl FunctionSpec {
                 test: None,
                 tasks: HashMap::new(),
                 targets: None,
-                aux_files: None
+                aux_files: None,
+                shared: None,
             },
         }
     }
@@ -603,7 +606,8 @@ impl InlineFunctionSpec {
             test: None,
             tasks: HashMap::new(),
             targets: targets,
-            aux_files: None
+            aux_files: None,
+            shared: None,
         }
     }
 

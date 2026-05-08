@@ -573,10 +573,10 @@ mod tests {
                         }},
                         "test": {{}},
                         "targets": [],
+                        "shared": false,
                         "aux_files": {aux_json}
                     }}
                 }},
-                "all_functions": {{}},
                 "mutations": {{}},
                 "schedules": {{}},
                 "queues": {{}},
